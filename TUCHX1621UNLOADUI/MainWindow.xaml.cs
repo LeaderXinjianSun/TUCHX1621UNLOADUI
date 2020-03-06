@@ -99,8 +99,8 @@ namespace TUCHX1621UNLOADUI
                 try
                 {
                     #region IO
-                    bool[] M2860 = Fx5u_2.ReadMultiM("M2860", 32);
-                    Fx5u.SetMultiM("M2660", M2860);
+                    bool[] M2764 = Fx5u_2.ReadMultiM("M2764", 32);
+                    Fx5u.SetMultiM("M2564", M2764);
                     #endregion
                     #region 扫码
                     //扫码（载具）【A轨道】
