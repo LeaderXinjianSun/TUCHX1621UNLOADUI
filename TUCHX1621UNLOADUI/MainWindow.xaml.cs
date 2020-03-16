@@ -214,7 +214,7 @@ namespace TUCHX1621UNLOADUI
                                     if (checkrst)
                                     {
                                         string str;
-                                        Fx5u.WriteMultD("D1000", result);
+                                        Fx5u_2.WriteMultD("D1000", result);
                                         str = "A_BordInfo;";
                                         for (int i = 0; i < 15; i++)
                                         {
@@ -347,7 +347,7 @@ namespace TUCHX1621UNLOADUI
                                     if (checkrst)
                                     {
                                         string str;
-                                        Fx5u.WriteMultD("D1100", result);
+                                        Fx5u_2.WriteMultD("D1020", result);
                                         str = "B_BordInfo;";
                                         for (int i = 0; i < 15; i++)
                                         {
