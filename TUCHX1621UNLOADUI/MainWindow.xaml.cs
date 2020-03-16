@@ -258,7 +258,7 @@ namespace TUCHX1621UNLOADUI
                     #endregion
                     #region 大数据读取
                     //读报警
-                    M300 = Fx5u_2.ReadMultiM("M300", 64);
+                    M300 = Fx5u_2.ReadMultiM("M1100", (ushort)AlarmList.Count);
                     //读三色灯状态
                     LampColor = Fx5u_2.ReadW("D200");
                     #endregion
@@ -723,7 +723,7 @@ namespace TUCHX1621UNLOADUI
 
         private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            e.Cancel = true;
+            //e.Cancel = true;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -737,9 +737,46 @@ namespace TUCHX1621UNLOADUI
             MsgTextBox.ScrollToEnd();
         }
 
-        private void FreeBordBarcodeButtonClick(object sender, RoutedEventArgs e)
+        private async void FreeBordBarcodeButtonClick(object sender, RoutedEventArgs e)
         {
-
+            string barcode = BordBarcode.Text;
+            if (barcode != "")
+            {
+                BordBarcode.Text = "";
+                string result = await Task<string>.Run(() => {
+                    try
+                    {
+                        Mysql mysql = new Mysql();
+                        string rst = "-999";
+                        if (mysql.Connect())
+                        {
+                            string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
+                            DataSet ds = mysql.Select(stm);
+                            DataTable dt = ds.Tables["table0"];
+                            if (dt.Rows.Count > 0)
+                            {
+                                stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
+                                rst = mysql.executeQuery(stm).ToString();
+                            }
+                            else
+                            {
+                                rst = "信息未录入";
+                            }
+                        }
+                        mysql.DisConnect();
+                        return barcode + "绑定 " + rst;
+                    }
+                    catch (Exception ex)
+                    {
+                        return ex.Message;
+                    }
+                });
+                AddMessage(result);
+            }
+            else
+            {
+                AddMessage("条码为空");
+            }
         }
 
         private void BigDataParamClicked(object sender, RoutedEventArgs e)
