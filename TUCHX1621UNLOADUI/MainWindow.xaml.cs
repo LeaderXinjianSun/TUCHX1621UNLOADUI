@@ -395,9 +395,21 @@ namespace TUCHX1621UNLOADUI
         }
         async void AlarmAction(int i)
         {
-            while (M300[i])
+            while (true)
             {
                 await Task.Delay(100);
+                try
+                {
+                    if (!M300[i])
+                    {
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    AddMessage("AlarmAction" + ex.Message);
+                }
+
             }
             AlarmList[i].End = DateTime.Now;
             AddMessage(AlarmList[i].Code + AlarmList[i].Content + "解除");
@@ -764,7 +776,7 @@ namespace TUCHX1621UNLOADUI
                             }
                         }
                         mysql.DisConnect();
-                        return barcode + "绑定 " + rst;
+                        return barcode + "解绑 " + rst;
                     }
                     catch (Exception ex)
                     {
