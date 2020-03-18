@@ -82,6 +82,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AlarmData.cs" />
+    <Compile Include="CPublic.cs" />
+    <Compile Include="CReader.cs" />
     <Compile Include="DateTimeUtility.cs" />
     <Compile Include="Fx5u.cs" />
     <Compile Include="Inifile.cs" />

@@ -37,6 +37,8 @@ namespace TUCHX1621UNLOADUI
         string _PM, _GROUP1, _TRACK, _MACID, _LIGHT_ID;
         int LampGreenElapse, LampGreenFlickerElapse, LampYellowElapse, LampYellowFlickerElapse, LampRedElapse;
         string LastBanci;
+        读写器530SDK.CReader reader = new 读写器530SDK.CReader();
+        bool CardLockFlag;DateTime CardLockTime;
         #endregion
         public MainWindow()
         {
@@ -122,7 +124,8 @@ namespace TUCHX1621UNLOADUI
             ScanB = new Scan();
             COM = Inifile.INIGetStringValue(iniParameterPath, "Scan", "ScanB", "COM3");
             ScanB.ini(COM);
-            UpdateUI();            
+            UpdateUI();
+            CardRun();
             Task.Run(() => { Run(); });
             BigDataRun();
             #region 更新本地时间
@@ -213,6 +216,11 @@ namespace TUCHX1621UNLOADUI
                         }
                     });
 
+                    Fx5u_2.SetM("M2606", true);
+                    CardLockFlag = true;
+                    CardLockTime = DateTime.Now;
+                    AddMessage("机台锁定!");
+
                     AddMessage(LastBanci + " 换班数据清零");
                 }
                 #endregion
@@ -268,6 +276,160 @@ namespace TUCHX1621UNLOADUI
                 SWms = sw.ElapsedMilliseconds;
             }
         }
+        async void CardRun()
+        {
+            string MODE = "";int CardStatus;int cardret = 1;int timetick = 0;
+            Fx5u_2.SetM("M2606", true);
+            CardLockFlag = true;
+            CardLockTime = DateTime.Now;
+            AddMessage("机台锁定!");
+            while (true)
+            {
+                await Task.Delay(1000);
+
+                #region 刷卡
+                try
+                {
+                    byte[] buf = new byte[256];//用来存储卡信息的buff
+                    byte[] snr = 读写器530SDK.CPublic.CharToByte("FF FF FF FF FF FF");//应该是一种读码格式，照抄即可。
+                    if (true)
+                    {
+                        if (IntPtr.Zero == reader.GetHComm())
+                        {
+                            string COM = Inifile.INIGetStringValue(iniParameterPath, "读卡器", "COM", "COM19").Replace("COM", "");
+                            reader.OpenComm(int.Parse(COM), 9600);
+                            MODE = Inifile.INIGetStringValue(iniParameterPath, "读卡器", "MODE", "3");
+                        }
+
+                        //刷卡；若刷到卡返回0，没刷到回1。
+                        CardStatus = reader.MF_Read(0, byte.Parse(MODE), 0, 1, ref snr[0], ref buf[0]);
+                        //采用上升沿信号，防止卡放在读卡机上，重复执行查询动作。寄卡放一次，才查询一次，要再查询，需要重新刷卡。
+                        if (cardret != CardStatus)
+                        {
+                            cardret = CardStatus;
+                            if (CardStatus == 0)//刷到卡了
+                            {
+                                string strTmp = "";
+                                //测试发现，卡返回的是16个HEX（十六进制）数，放在byte[]数组内，需要用一下方法转成字符串格式。
+                                for (int i = 0; i < 16; i++)
+                                {
+                                    strTmp += string.Format("{0:X2} ", buf[i]);
+                                }
+                                //删除转换后，字符串内的空格。这些HEX字符并不是员工编号字符的编码，需要用读到的字符串在数据库里查找，
+                                //在记录里再匹配员工信息和权限
+                                string barcode = strTmp.Replace(" ", "");
+                                AddMessage("刷卡 " + barcode);
+                                Oracle oraDB = new Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
+                                if (oraDB.isConnect())
+                                {
+                                    string stm = string.Format("SELECT * FROM CAP_TABLE WHERE BARCODE = '{0}'", barcode);
+                                    DataSet s = oraDB.executeQuery(stm);
+                                    DataTable dt = s.Tables[0];
+                                    if (dt.Rows.Count > 0)//查询到数据条目大于0，即查到了
+                                    {
+                                        //取查到的第一行记录，一般只有1行。如果有多行，也只取第一行。
+                                        DataRow dr = dt.Rows[0];
+                                        //筛选一下数据，如果我们需要的“工号”、“姓名”和“权限”对应的栏位为空，则数据不合格。
+                                        if (dr["OPERATORID"] != DBNull.Value && dr["DATA0"] != DBNull.Value && dr["RESULT"] != DBNull.Value)
+                                        {
+                                            //打印出匹配到的结果，并返回给下位机。
+                                            AddMessage("工号 " + (string)dr["OPERATORID"] + " 姓名 " + (string)dr["DATA0"] + " 权限 " + (string)dr["RESULT"]);
+                                            stm = string.Format("UPDATE CFT_DATA SET BARCODE = '{0}',TRESULT = '{1}',OPERTOR = '{2}',TESTDATE = '{3}',TESTTIME = '{4}' WHERE MNO = '{5}' OR CFT01 = '{5}'",
+                                                barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _MACID);
+                                            int updaterst = oraDB.executeNonQuery(stm);
+                                            AddMessage("更新刷卡机台" + updaterst.ToString());
+                                        }
+                                        else
+                                        {
+                                            AddMessage("数据库记录信息不完整");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        AddMessage("未查询到卡信息");
+                                    }
+                                }
+                                oraDB.disconnect();
+                            }
+                        }
+                    }
+
+                }
+                catch (Exception ex)
+                {
+                    reader.CloseComm();
+                    AddMessage(ex.Message);
+                }
+                #endregion
+                #region 刷卡恢复
+                if (CardLockFlag)
+                {
+                    try
+                    {
+                        Oracle oraDB = new Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
+                        if (oraDB.isConnect())
+                        {
+                            string stm = string.Format("SELECT * FROM CFT_DATA WHERE MNO = '{0}' AND TRESULT = 'PASS' ORDER BY TESTDATE DESC,TESTTIME DESC",
+                                _MACID);
+                            DataSet ds = oraDB.executeQuery(stm);
+                            DataTable dt = ds.Tables[0];
+                            if (dt.Rows.Count > 0)
+                            {
+                                DataRow dr = dt.Rows[0];
+                                string datestr = (string)dr["TESTDATE"];
+                                string timestr = (string)dr["TESTTIME"];
+                                if (datestr.Length == 8 && (timestr.Length == 5 || timestr.Length == 6))
+                                {
+                                    if (timestr.Length == 5)
+                                    {
+                                        timestr = "0" + timestr;
+                                    }
+                                    string datetimestr = string.Empty;
+                                    datetimestr = string.Format("{0}/{1}/{2} {3}:{4}:{5}", datestr.Substring(0, 4), datestr.Substring(4, 2), datestr.Substring(6, 2), timestr.Substring(0, 2), timestr.Substring(2, 2), timestr.Substring(4, 2));
+                                    DateTime updatetime = Convert.ToDateTime(datetimestr);
+                                    if ((updatetime - CardLockTime).TotalMilliseconds > 0)
+                                    {
+                                        Fx5u_2.SetM("M2606", false);
+                                        CardLockFlag = false;
+                                        AddMessage("刷卡成功，解锁");
+                                    }
+                                }
+                            }
+                        }
+                        oraDB.disconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        AddMessage(ex.Message);
+                    }
+                }
+                #endregion
+                #region 锁机
+                if (!CardLockFlag)
+                {
+                    if (LampColor != 1)
+                    {
+                        if (timetick++ > 15 * 60)
+                        {
+                            Fx5u_2.SetM("M2606", true);
+                            CardLockFlag = true;
+                            CardLockTime = DateTime.Now;
+                            AddMessage("机台锁定!");
+                            timetick = 0;
+                        }
+                    }
+                    else
+                    {
+                        timetick = 0;
+                    }
+                }
+                else
+                {
+                    timetick = 0;
+                }
+                #endregion
+            }
+        }
         async void BigDataRun()
         {
             int _LampColor = LampColor;
@@ -301,7 +463,7 @@ namespace TUCHX1621UNLOADUI
                                         if (mysql.Connect())
                                         {
                                             string stm = string.Format("INSERT INTO HA_F4_DATA_ALARM (PM, GROUP1,TRACK,MACID,NAME,SSTARTDATE,SSTARTTIME,SSTOPDATE,SSTOPTIME,TIME,CLASS) VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}')"
-                                                , _PM, _GROUP1, _TRACK, _MACID, AlarmList[i].Content, AlarmList[i].Start.ToString("yyyyMMdd"), AlarmList[i].Start.ToString("HHmmss"), AlarmList[i].End.ToString("yyyyMMdd"), AlarmList[i].End.ToString("hhmmss"), "0", GetBanci());
+                                                , _PM, _GROUP1, _TRACK, _MACID, AlarmList[i].Content, AlarmList[i].Start.ToString("yyyyMMdd"), AlarmList[i].Start.ToString("HHmmss"), AlarmList[i].End.ToString("yyyyMMdd"), AlarmList[i].End.ToString("HHmmss"), "0", GetBanci());
                                             _result = mysql.executeQuery(stm);
                                         }
                                         mysql.DisConnect();
