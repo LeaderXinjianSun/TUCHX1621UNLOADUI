@@ -193,7 +193,7 @@ namespace TUCHX1621UNLOADUI
                             if (mysql.Connect())
                             {
                                 string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}')"
-                                    , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", GROUP1, TRACK);
+                                    , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK);
                                 _result = mysql.executeQuery(stm);
                             }
                             this.Dispatcher.Invoke(new Action(() =>
@@ -612,17 +612,17 @@ namespace TUCHX1621UNLOADUI
             string rs = "";
             if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20)
             {
-                rs += DateTime.Now.ToString("yyyyMMdd") + "D";
+                rs += DateTime.Now.ToString("yyyyMMdd") + "_D";
             }
             else
             {
                 if (DateTime.Now.Hour >= 0 && DateTime.Now.Hour < 8)
                 {
-                    rs += DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "N";
+                    rs += DateTime.Now.AddDays(-1).ToString("yyyyMMdd") + "_N";
                 }
                 else
                 {
-                    rs += DateTime.Now.ToString("yyyyMMdd") + "D";
+                    rs += DateTime.Now.ToString("yyyyMMdd") + "_N";
                 }
             }
             return rs;
@@ -757,6 +757,10 @@ namespace TUCHX1621UNLOADUI
             }
             else
             {
+                this.Dispatcher.Invoke(new Action(() =>
+                {
+                    AddMessage("扫码失败");
+                }));
                 Fx5u_2.SetM("M2598", true);//载具扫码NG【A轨道】
             }
         }
@@ -890,6 +894,10 @@ namespace TUCHX1621UNLOADUI
             }
             else
             {
+                this.Dispatcher.Invoke(new Action(() =>
+                {
+                    AddMessage("扫码失败");
+                }));
                 Fx5u_2.SetM("M2603", true);//载具扫码NG【B轨道】
             }
         }
