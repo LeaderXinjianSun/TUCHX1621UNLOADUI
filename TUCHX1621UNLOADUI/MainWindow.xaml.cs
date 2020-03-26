@@ -338,6 +338,7 @@ namespace TUCHX1621UNLOADUI
                                                 barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _MACID);
                                             int updaterst = oraDB.executeNonQuery(stm);
                                             AddMessage("更新刷卡机台" + updaterst.ToString());
+                                            oraDB.executeNonQuery("COMMIT");
                                         }
                                         else
                                         {
