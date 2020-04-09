@@ -34,7 +34,7 @@ namespace TUCHX1621UNLOADUI
         Scan ScanA, ScanB;
         long SWms = 0;int LampColor = 1;bool[] M300; Stopwatch LampGreenSw = new Stopwatch();
         List<AlarmData> AlarmList = new List<AlarmData>(); string CurrentAlarm = "";
-        string _PM, _GROUP1, _TRACK, _MACID, _LIGHT_ID;
+        string _PM, _GROUP1, _TRACK, _MACID, _LIGHT_ID, _WORKSTATION;
         int LampGreenElapse, LampGreenFlickerElapse, LampYellowElapse, LampYellowFlickerElapse, LampRedElapse;
         string LastBanci;
         读写器530SDK.CReader reader = new 读写器530SDK.CReader();
@@ -64,6 +64,7 @@ namespace TUCHX1621UNLOADUI
             GROUP1.Text = _GROUP1 = Inifile.INIGetStringValue(iniParameterPath, "BigData", "GROUP1", "NA");
             TRACK.Text = _TRACK = Inifile.INIGetStringValue(iniParameterPath, "BigData", "TRACK", "0102");
             MACID.Text = _MACID = Inifile.INIGetStringValue(iniParameterPath, "BigData", "MACID", "007");
+            WORKSTATION.Text = _WORKSTATION = Inifile.INIGetStringValue(iniParameterPath, "BigData", "WORKSTATION", "X1621");
             LIGHT_ID.Text = _LIGHT_ID = Inifile.INIGetStringValue(iniParameterPath, "BigData", "LIGHT_ID", "007");
 
             LampGreenElapse = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "BigData", "LampGreenElapse", "0"));
@@ -192,8 +193,8 @@ namespace TUCHX1621UNLOADUI
                             int _result = -999;
                             if (mysql.Connect())
                             {
-                                string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}')"
-                                    , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK);
+                                string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
+                                    , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
                                 _result = mysql.executeQuery(stm);
                             }
                             this.Dispatcher.Invoke(new Action(() =>
@@ -330,15 +331,22 @@ namespace TUCHX1621UNLOADUI
                                         //取查到的第一行记录，一般只有1行。如果有多行，也只取第一行。
                                         DataRow dr = dt.Rows[0];
                                         //筛选一下数据，如果我们需要的“工号”、“姓名”和“权限”对应的栏位为空，则数据不合格。
-                                        if (dr["OPERATORID"] != DBNull.Value && dr["DATA0"] != DBNull.Value && dr["RESULT"] != DBNull.Value)
+                                        if (dr["OPERATORID"] != DBNull.Value && dr["DATA0"] != DBNull.Value && dr["RESULT"] != DBNull.Value && dr["PARTNUM"] != DBNull.Value)
                                         {
                                             //打印出匹配到的结果，并返回给下位机。
                                             AddMessage("工号 " + (string)dr["OPERATORID"] + " 姓名 " + (string)dr["DATA0"] + " 权限 " + (string)dr["RESULT"]);
-                                            stm = string.Format("UPDATE CFT_DATA SET BARCODE = '{0}',TRESULT = '{1}',OPERTOR = '{2}',TESTDATE = '{3}',TESTTIME = '{4}' WHERE MNO = '{5}' OR CFT01 = '{5}'",
-                                                barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _MACID);
-                                            int updaterst = oraDB.executeNonQuery(stm);
-                                            AddMessage("更新刷卡机台" + updaterst.ToString());
-                                            oraDB.executeNonQuery("COMMIT");
+                                            if ((string)dr["PARTNUM"] == PM.Text)
+                                            {
+                                                stm = string.Format("UPDATE CFT_DATA SET BARCODE = '{0}',TRESULT = '{1}',OPERTOR = '{2}',TESTDATE = '{3}',TESTTIME = '{4}',PARTNUM = '{6}' WHERE MNO = '{5}' OR CFT01 = '{5}'",
+                                                    barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _MACID, (string)dr["PARTNUM"]);
+                                                int updaterst = oraDB.executeNonQuery(stm);
+                                                AddMessage("更新刷卡机台" + updaterst.ToString());
+                                                oraDB.executeNonQuery("COMMIT");
+                                            }
+                                            else
+                                            {
+                                                AddMessage("人员信息与料号不符");
+                                            }
                                         }
                                         else
                                         {
@@ -571,8 +579,8 @@ namespace TUCHX1621UNLOADUI
                     Mysql mysql = new Mysql();
                     if (mysql.Connect())
                     {
-                        string stm = string.Format("INSERT INTO HA_F4_DATA_ALARM (PM, GROUP1,TRACK,MACID,NAME,SSTARTDATE,SSTARTTIME,SSTOPDATE,SSTOPTIME,TIME,CLASS) VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}')"
-                            , _PM, _GROUP1, _TRACK, _MACID, AlarmList[i].Content, AlarmList[i].Start.ToString("yyyyMMdd"), AlarmList[i].Start.ToString("HHmmss"), AlarmList[i].End.ToString("yyyyMMdd"), AlarmList[i].End.ToString("HHmmss"), time.TotalMinutes.ToString("F1"), GetBanci());
+                        string stm = string.Format("INSERT INTO HA_F4_DATA_ALARM (PM, GROUP1,TRACK,MACID,NAME,SSTARTDATE,SSTARTTIME,SSTOPDATE,SSTOPTIME,TIME,CLASS,WORKSTATION) VALUES('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','{8}','{9}','{10}','{11}')"
+                            , _PM, _GROUP1, _TRACK, _MACID, AlarmList[i].Content, AlarmList[i].Start.ToString("yyyyMMdd"), AlarmList[i].Start.ToString("HHmmss"), AlarmList[i].End.ToString("yyyyMMdd"), AlarmList[i].End.ToString("HHmmss"), time.TotalMinutes.ToString("F1"), GetBanci(), _WORKSTATION);
                         _result = mysql.executeQuery(stm);
                     }
                     mysql.DisConnect();
@@ -945,11 +953,13 @@ namespace TUCHX1621UNLOADUI
             _GROUP1 = GROUP1.Text;
             _TRACK = TRACK.Text;
             _MACID = MACID.Text;
+            _WORKSTATION = WORKSTATION.Text;
             _LIGHT_ID = LIGHT_ID.Text;
             Inifile.INIWriteValue(iniParameterPath, "BigData", "PM", PM.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "GROUP1", GROUP1.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "TRACK", TRACK.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "MACID", MACID.Text);
+            Inifile.INIWriteValue(iniParameterPath, "BigData", "WORKSTATION", WORKSTATION.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID", LIGHT_ID.Text);
             AddMessage("参数保存完成");
         }

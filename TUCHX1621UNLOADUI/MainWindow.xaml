@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TUCHX1621UNLOADUI"
         mc:Ignorable="d"
-        Title="TUCHX1621UNLOADUI2020032301" Icon="ship_64px_1224538_easyicon.net.ico"
-        WindowStartupLocation="CenterScreen" Height="318" Width="600" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="TUCHX1621UNLOADUI2020040901" Icon="ship_64px_1224538_easyicon.net.ico"
+        WindowStartupLocation="CenterScreen" Height="318" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
             <Style TargetType="TextBlock">
@@ -49,6 +49,10 @@
                 <TextBox Name="MACID" Width="60" Height="30"></TextBox>
             </StackPanel>
             <StackPanel Orientation="Horizontal" Margin="1">
+                <TextBlock Text="工站"></TextBlock>
+                <TextBox Name="WORKSTATION" Width="60" Height="30"></TextBox>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="1">
                 <TextBlock Text="三色灯编号"></TextBlock>
                 <TextBox Name="LIGHT_ID" Width="60" Height="30"></TextBox>
                 <Button Width="40" Height="30" Margin="1" Content="保存" Click="BigDataParamClicked"></Button>
@@ -62,7 +66,7 @@
             <TextBox VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" Margin="1" x:Name="MsgTextBox" IsReadOnly="True" TextChanged="MsgTextBox_TextChanged"  FontSize="14" Background="Black" FontFamily="宋体" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"></TextBox>
             <StackPanel Grid.Column="1" Orientation="Vertical">
                 <TextBlock Text="板条码" HorizontalAlignment="Left"></TextBlock>
-                <TextBox Name="BordBarcode" Width="100" Height="30" HorizontalAlignment="Left"></TextBox>
+                <TextBox Name="BordBarcode" Width="130" Height="30" HorizontalAlignment="Left"></TextBox>
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="解绑" Margin="0,10,0,10" Click="FreeBordBarcodeButtonClick"></Button>
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="扫码A" Margin="0,10,0,10" Click="扫码AClick"></Button>
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="扫码B" Margin="0,10,0,10" Click="扫码BClick"></Button>
