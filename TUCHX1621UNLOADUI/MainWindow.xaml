@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TUCHX1621UNLOADUI"
         mc:Ignorable="d"
-        Title="TUCHX1621UNLOADUI2020040901" Icon="ship_64px_1224538_easyicon.net.ico"
+        Title="TUCHX1621UNLOADUI2020041201" Icon="ship_64px_1224538_easyicon.net.ico"
         WindowStartupLocation="CenterScreen" Height="318" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>

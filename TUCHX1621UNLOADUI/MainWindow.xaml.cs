@@ -57,6 +57,7 @@ namespace TUCHX1621UNLOADUI
                 MsgTextBox.Text += "\r\n";
             }
             MsgTextBox.Text += DateTime.Now.ToString("yyyy/MM/dd HH:mm:ss") + " " + str;
+            RunLog(str);
         }
         void Init()
         {
@@ -653,68 +654,77 @@ namespace TUCHX1621UNLOADUI
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                    mysql.executeQuery(stm);
-                                    this.Dispatcher.Invoke(new Action(() =>
+                                    int rstnum = mysql.executeQuery(stm);
+                                    if (rstnum > 0)
                                     {
-                                        AddMessage("板 " + barcode + " 解绑");
-                                    }));
-
-                                    short[] result = new short[15];
-                                    bool checkrst = true;
-                                    for (int i = 0; i < 15; i++)
-                                    {
-                                        DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (i + 1).ToString()));
-                                        if (drs.Length == 1)
+                                        this.Dispatcher.Invoke(new Action(() =>
                                         {
-                                            try
+                                            AddMessage("板 " + barcode + " 解绑");
+                                        }));
+
+                                        short[] result = new short[15];
+                                        bool checkrst = true;
+                                        for (int i = 0; i < 15; i++)
+                                        {
+                                            DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (i + 1).ToString()));
+                                            if (drs.Length == 1)
                                             {
-                                                result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                try
+                                                {
+                                                    result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    this.Dispatcher.Invoke(new Action(() =>
+                                                    {
+                                                        AddMessage(ex.Message);
+                                                    }));
+
+                                                    checkrst = false;
+                                                    break;
+                                                }
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
                                                 this.Dispatcher.Invoke(new Action(() =>
                                                 {
-                                                    AddMessage(ex.Message);
+                                                    AddMessage("板 " + barcode + " 序号 " + (i + 1).ToString() + "索引数 " + drs.Length.ToString());
                                                 }));
-                                                
+
                                                 checkrst = false;
                                                 break;
                                             }
                                         }
-                                        else
+                                        if (checkrst)
                                         {
+                                            string str;
+                                            Fx5u_2.WriteMultD("D1000", result);
+                                            str = "A_BordInfo;";
+                                            for (int i = 0; i < 15; i++)
+                                            {
+                                                str += result[i].ToString() + ";";
+                                            }
+                                            str = str.Substring(0, str.Length - 1);
                                             this.Dispatcher.Invoke(new Action(() =>
                                             {
-                                                AddMessage("板 " + barcode + " 序号 " + (i + 1).ToString() + "索引数 " + drs.Length.ToString());
+                                                AddMessage(str);
                                             }));
-                                            
-                                            checkrst = false;
-                                            break;
+
+                                            Fx5u_2.SetM("M2599", true);//载具扫码-已测过【A轨道】
                                         }
-                                    }
-                                    if (checkrst)
-                                    {
-                                        string str;
-                                        Fx5u_2.WriteMultD("D1000", result);
-                                        str = "A_BordInfo;";
-                                        for (int i = 0; i < 15; i++)
+                                        else
                                         {
-                                            str += result[i].ToString() + ";";
+                                            Fx5u_2.SetM("M2600", true);//载具扫码-未测过【A轨道】
                                         }
-                                        str = str.Substring(0, str.Length - 1);
-                                        this.Dispatcher.Invoke(new Action(() =>
-                                        {
-                                            AddMessage(str);
-                                        }));
-                                        
-                                        Fx5u_2.SetM("M2599", true);//载具扫码-已测过【A轨道】
                                     }
                                     else
                                     {
-                                        Fx5u_2.SetM("M2600", true);//载具扫码-未测过【A轨道】
-                                    }
-
-                                        
+                                        this.Dispatcher.Invoke(new Action(() =>
+                                        {
+                                            AddMessage("解绑失败");
+                                        }));
+                                        Fx5u_2.SetM("M2598", true);//载具扫码NG【A轨道】
+                                    } 
                                 }
                                 else
                                 {
@@ -782,76 +792,83 @@ namespace TUCHX1621UNLOADUI
                             }
                             else
                             {
-
-
                                 stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,15";
                                 ds = mysql.Select(stm);
                                 dt = ds.Tables["table0"];
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                    mysql.executeQuery(stm);
-                                    this.Dispatcher.Invoke(new Action(() =>
+                                    int rstnum = mysql.executeQuery(stm);
+                                    if (rstnum > 0)
                                     {
-                                        AddMessage("板 " + barcode + " 解绑");
-                                    }));
-
-                                    short[] result = new short[15];
-                                    bool checkrst = true;
-                                    for (int i = 0; i < 15; i++)
-                                    {
-                                        DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (i + 1).ToString()));
-                                        if (drs.Length == 1)
+                                        this.Dispatcher.Invoke(new Action(() =>
                                         {
-                                            try
+                                            AddMessage("板 " + barcode + " 解绑");
+                                        }));
+
+                                        short[] result = new short[15];
+                                        bool checkrst = true;
+                                        for (int i = 0; i < 15; i++)
+                                        {
+                                            DataRow[] drs = dt.Select(string.Format("PCSSER = '{0}'", (i + 1).ToString()));
+                                            if (drs.Length == 1)
                                             {
-                                                result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                try
+                                                {
+                                                    result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    this.Dispatcher.Invoke(new Action(() =>
+                                                    {
+                                                        AddMessage(ex.Message);
+                                                    }));
+
+                                                    checkrst = false;
+                                                    break;
+                                                }
                                             }
-                                            catch (Exception ex)
+                                            else
                                             {
                                                 this.Dispatcher.Invoke(new Action(() =>
                                                 {
-                                                    AddMessage(ex.Message);
+                                                    AddMessage("板 " + barcode + " 序号 " + (i + 1).ToString() + "索引数 " + drs.Length.ToString());
                                                 }));
 
                                                 checkrst = false;
                                                 break;
                                             }
                                         }
-                                        else
+                                        if (checkrst)
                                         {
+                                            string str;
+                                            Fx5u_2.WriteMultD("D1020", result);
+                                            str = "B_BordInfo;";
+                                            for (int i = 0; i < 15; i++)
+                                            {
+                                                str += result[i].ToString() + ";";
+                                            }
+                                            str = str.Substring(0, str.Length - 1);
                                             this.Dispatcher.Invoke(new Action(() =>
                                             {
-                                                AddMessage("板 " + barcode + " 序号 " + (i + 1).ToString() + "索引数 " + drs.Length.ToString());
+                                                AddMessage(str);
                                             }));
 
-                                            checkrst = false;
-                                            break;
+                                            Fx5u_2.SetM("M2604", true);//载具扫码-已测过【B轨道】
                                         }
-                                    }
-                                    if (checkrst)
-                                    {
-                                        string str;
-                                        Fx5u_2.WriteMultD("D1020", result);
-                                        str = "B_BordInfo;";
-                                        for (int i = 0; i < 15; i++)
+                                        else
                                         {
-                                            str += result[i].ToString() + ";";
+                                            Fx5u_2.SetM("M2605", true);//载具扫码-未测过【B轨道】
                                         }
-                                        str = str.Substring(0, str.Length - 1);
-                                        this.Dispatcher.Invoke(new Action(() =>
-                                        {
-                                            AddMessage(str);
-                                        }));
-
-                                        Fx5u_2.SetM("M2604", true);//载具扫码-已测过【B轨道】
                                     }
                                     else
                                     {
-                                        Fx5u_2.SetM("M2605", true);//载具扫码-未测过【B轨道】
+                                        this.Dispatcher.Invoke(new Action(() =>
+                                        {
+                                            AddMessage("解绑失败");
+                                        }));
+                                        Fx5u_2.SetM("M2603", true);//载具扫码NG【B轨道】
                                     }
-
-
                                 }
                                 else
                                 {
@@ -886,6 +903,43 @@ namespace TUCHX1621UNLOADUI
                 }));
                 Fx5u_2.SetM("M2603", true);//载具扫码NG【B轨道】
             }
+        }
+        void RunLog(string str)
+        {
+            try
+            {
+                string tempSaveFilee5 = System.AppDomain.CurrentDomain.BaseDirectory + @"RunLog";
+                DateTime dtim = DateTime.Now;
+                string DateNow = dtim.ToString("yyyy/MM/dd");
+                string TimeNow = dtim.ToString("HH:mm:ss");
+
+                if (!Directory.Exists(tempSaveFilee5))
+                {
+                    Directory.CreateDirectory(tempSaveFilee5);  //创建目录 
+                }
+
+                if (File.Exists(tempSaveFilee5 + "\\" + DateNow.Replace("/", "") + ".txt"))
+                {
+                    //第一种方法：
+                    FileStream fs = new FileStream(tempSaveFilee5 + "\\" + DateNow.Replace("/", "") + ".txt", FileMode.Append);
+                    StreamWriter sw = new StreamWriter(fs);
+                    sw.WriteLine("TTIME：" + TimeNow + " 执行事件：" + str);
+                    sw.Dispose();
+                    fs.Dispose();
+                    sw.Close();
+                    fs.Close();
+                }
+                else
+                {
+                    //不存在就新建一个文本文件,并写入一些内容 
+                    StreamWriter sw;
+                    sw = File.CreateText(tempSaveFilee5 + "\\" + DateNow.Replace("/", "") + ".txt");
+                    sw.WriteLine("TTIME：" + TimeNow + " 执行事件：" + str);
+                    sw.Dispose();
+                    sw.Close();
+                }
+            }
+            catch { }
         }
         #endregion
 
