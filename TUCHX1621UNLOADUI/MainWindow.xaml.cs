@@ -618,11 +618,11 @@ namespace TUCHX1621UNLOADUI
         {
             if (barcode != "Error")
             {
-                Mysql mysql = new Mysql();
-                if (mysql.Connect())
+                SXJLibrary.Oracle oraDB = new SXJLibrary.Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
+                if (oraDB.isConnect())
                 {
-                    string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
-                    DataSet ds = mysql.Select(stm);
+                    string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' AND ROWNUM <= 5 ORDER BY SIDATE DESC";
+                    DataSet ds = oraDB.executeQuery(stm);
                     DataTable dt = ds.Tables["table0"];
                     if (dt.Rows.Count > 0)
                     {
@@ -648,13 +648,14 @@ namespace TUCHX1621UNLOADUI
                             {
 
 
-                                stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,15";
-                                ds = mysql.Select(stm);
+                                stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' AND ROWNUM <= 15 ORDER BY SIDATE DESC";
+                                ds = oraDB.executeQuery(stm);
                                 dt = ds.Tables["table0"];
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                    int rstnum = mysql.executeQuery(stm);
+                                    int rstnum = oraDB.executeNonQuery(stm);
+                                    oraDB.executeNonQuery("COMMIT");
                                     if (rstnum > 0)
                                     {
                                         this.Dispatcher.Invoke(new Action(() =>
@@ -749,7 +750,7 @@ namespace TUCHX1621UNLOADUI
                     }
                     Fx5u_2.SetM("M2597", true);//载具扫码OK【A轨道】
                 }
-                mysql.DisConnect();
+                oraDB.disconnect();
             }
             else
             {
@@ -764,11 +765,11 @@ namespace TUCHX1621UNLOADUI
         {
             if (barcode != "Error")
             {
-                Mysql mysql = new Mysql();
-                if (mysql.Connect())
+                SXJLibrary.Oracle oraDB = new SXJLibrary.Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
+                if (oraDB.isConnect())
                 {
-                    string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
-                    DataSet ds = mysql.Select(stm);
+                    string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' AND ROWNUM <= 5 ORDER BY SIDATE DESC";
+                    DataSet ds = oraDB.executeQuery(stm);
                     DataTable dt = ds.Tables["table0"];
                     if (dt.Rows.Count > 0)
                     {
@@ -792,13 +793,14 @@ namespace TUCHX1621UNLOADUI
                             }
                             else
                             {
-                                stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,15";
-                                ds = mysql.Select(stm);
+                                stm = "SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' AND ROWNUM <= 15 ORDER BY SIDATE DESC";
+                                ds = oraDB.executeQuery(stm);
                                 dt = ds.Tables["table0"];
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                    int rstnum = mysql.executeQuery(stm);
+                                    int rstnum = oraDB.executeNonQuery(stm);
+                                    oraDB.executeNonQuery("COMMIT");
                                     if (rstnum > 0)
                                     {
                                         this.Dispatcher.Invoke(new Action(() =>
@@ -893,7 +895,7 @@ namespace TUCHX1621UNLOADUI
                     }
                     Fx5u_2.SetM("M2602", true);//载具扫码OK【B轨道】
                 }
-                mysql.DisConnect();
+                oraDB.disconnect();
             }
             else
             {
@@ -968,24 +970,25 @@ namespace TUCHX1621UNLOADUI
                 string result = await Task<string>.Run(() => {
                     try
                     {
-                        Mysql mysql = new Mysql();
+                        SXJLibrary.Oracle oraDB = new SXJLibrary.Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
                         string rst = "-999";
-                        if (mysql.Connect())
+                        if (oraDB.isConnect())
                         {
-                            string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC LIMIT 0,5";
-                            DataSet ds = mysql.Select(stm);
+                            string stm = "SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' AND ROWNUM <= 5 ORDER BY SIDATE DESC";
+                            DataSet ds = oraDB.executeQuery(stm);
                             DataTable dt = ds.Tables["table0"];
                             if (dt.Rows.Count > 0)
                             {
                                 stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
-                                rst = mysql.executeQuery(stm).ToString();
+                                rst = oraDB.executeNonQuery(stm).ToString();
+                                oraDB.executeNonQuery("COMMIT");
                             }
                             else
                             {
                                 rst = "信息未录入";
                             }
                         }
-                        mysql.DisConnect();
+                        oraDB.disconnect();
                         return barcode + "解绑 " + rst;
                     }
                     catch (Exception ex)
