@@ -81,7 +81,7 @@ namespace SXJLibrary
             try
             {
                 OracleDataAdapter sda = new OracleDataAdapter(strSQL, oledbConn);
-                int m = sda.Fill(da);
+                int m = sda.Fill(da, "table0");
                 sda.Dispose();
             }
             catch (System.Exception ex)

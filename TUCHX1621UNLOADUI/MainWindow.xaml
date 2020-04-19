@@ -5,8 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TUCHX1621UNLOADUI"
         mc:Ignorable="d"
-        Title="TUCHX1621UNLOADUI2020041701" Icon="ship_64px_1224538_easyicon.net.ico"
-        WindowStartupLocation="CenterScreen" Height="318" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
+        Title="TUCHX1621UNLOADUI2020041801" Icon="ship_64px_1224538_easyicon.net.ico"
+        WindowStartupLocation="CenterScreen" Height="418" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
             <Style TargetType="TextBlock">
@@ -27,11 +27,11 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="40"></RowDefinition>
+            <RowDefinition Height="80"></RowDefinition>
             <RowDefinition></RowDefinition>
             <RowDefinition Height="40"></RowDefinition>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal">
+        <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal" Margin="1">
                 <TextBlock Text="机种"></TextBlock>
                 <TextBox Name="PM" Width="60" Height="30"></TextBox>
@@ -52,11 +52,19 @@
                 <TextBlock Text="工站"></TextBlock>
                 <TextBox Name="WORKSTATION" Width="60" Height="30"></TextBox>
             </StackPanel>
-            <StackPanel Orientation="Horizontal" Margin="1">
-                <TextBlock Text="三色灯编号"></TextBlock>
-                <TextBox Name="LIGHT_ID" Width="60" Height="30"></TextBox>
-                <Button Width="40" Height="30" Margin="1" Content="保存" Click="BigDataParamClicked"></Button>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="1">
+                    <TextBlock Text="三色灯编号" Width="90"></TextBlock>
+                    <TextBox Name="LIGHT_ID" Width="60" Height="30"></TextBox>
+                    <Button Width="40" Height="30" Margin="1" Content="保存" Click="BigDataParamClicked"></Button>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="1">
+                    <TextBlock Text="三色灯编号2" Width="90"></TextBlock>
+                    <TextBox Name="LIGHT_ID2" Width="60" Height="30"></TextBox>
+                    
+                </StackPanel>
             </StackPanel>
+
         </StackPanel>
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
