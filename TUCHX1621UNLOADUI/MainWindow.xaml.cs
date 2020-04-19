@@ -336,13 +336,13 @@ namespace TUCHX1621UNLOADUI
                                         //取查到的第一行记录，一般只有1行。如果有多行，也只取第一行。
                                         DataRow dr = dt.Rows[0];
                                         //筛选一下数据，如果我们需要的“工号”、“姓名”和“权限”对应的栏位为空，则数据不合格。
-                                        if (dr["OPERATORID"] != DBNull.Value && dr["DATA0"] != DBNull.Value && dr["RESULT"] != DBNull.Value && dr["PARTNUM"] != DBNull.Value)
+                                        if (dr["OPERATORID"] != DBNull.Value && dr["DATA0"] != DBNull.Value && dr["RESULT"] != DBNull.Value && dr["DATA1"] != DBNull.Value)
                                         {
                                             //打印出匹配到的结果，并返回给下位机。
-                                            AddMessage("工号 " + (string)dr["OPERATORID"] + " 姓名 " + (string)dr["DATA0"] + " 权限 " + (string)dr["RESULT"]);
+                                            AddMessage("工号 " + (string)dr["OPERATORID"] + " 姓名 " + (string)dr["DATA0"] + " 权限 " + (string)dr["RESULT"] + "料号 " + (string)dr["DATA1"]);
 
-                                            stm = string.Format("UPDATE CFT_DATA SET BARCODE = '{0}',TRESULT = '{1}',OPERTOR = '{2}',TESTDATE = '{3}',TESTTIME = '{4}',PARTNUM = '{6}' WHERE PARTNUM LIKE '%{5}%'",
-                                                barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _PM, (string)dr["PARTNUM"]);
+                                            stm = string.Format("UPDATE CFT_DATA SET BARCODE = '{0}',TRESULT = '{1}',OPERTOR = '{2}',TESTDATE = '{3}',TESTTIME = '{4}',CFT01 = '{6}' WHERE MNO = '{5}'",
+                                                barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), _PM + _GROUP1 + _TRACK + _MACID, (string)dr["DATA1"]);
                                             int updaterst = oraDB.executeNonQuery(stm);
                                             if (updaterst > 0)
                                             {
@@ -351,8 +351,8 @@ namespace TUCHX1621UNLOADUI
                                             }
                                             else
                                             {
-                                                stm = string.Format("INSERT INTO CFT_DATA (BARCODE,TRESULT,OPERTOR,TESTDATE,TESTTIME,PARTNUM) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}')",
-                                                    barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), (string)dr["PARTNUM"]);
+                                                stm = string.Format("INSERT INTO CFT_DATA (BARCODE,TRESULT,OPERTOR,TESTDATE,TESTTIME,PARTNUM,MNO) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
+                                                    barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), (string)dr["DATA1"], _PM + _GROUP1 + _TRACK + _MACID);
                                                 int insertrst = oraDB.executeNonQuery(stm);
                                                 AddMessage("插入刷卡机台" + (string)dr["PARTNUM"] + " " + insertrst.ToString());
                                                 oraDB.executeNonQuery("COMMIT");
@@ -389,8 +389,8 @@ namespace TUCHX1621UNLOADUI
                         Oracle oraDB = new Oracle("qddb04.eavarytech.com", "mesdb04", "ictdata", "ictdata*168");
                         if (oraDB.isConnect())
                         {
-                            string stm = string.Format("SELECT * FROM CFT_DATA WHERE PARTNUM LIKE '%{0}%' AND TRESULT = 'PASS' ORDER BY TESTDATE DESC,TESTTIME DESC",
-                                _PM);
+                            string stm = string.Format("SELECT * FROM CFT_DATA WHERE CFT01 LIKE '%{0}%' AND MNO = '{1}' AND TRESULT = 'PASS' ORDER BY TESTDATE DESC,TESTTIME DESC",
+                                _PM, _PM + _GROUP1 + _TRACK + _MACID);
                             DataSet ds = oraDB.executeQuery(stm);
                             DataTable dt = ds.Tables[0];
                             if (dt.Rows.Count > 0)
