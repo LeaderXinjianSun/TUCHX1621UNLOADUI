@@ -351,7 +351,7 @@ namespace TUCHX1621UNLOADUI
                                             }
                                             else
                                             {
-                                                stm = string.Format("INSERT INTO CFT_DATA (BARCODE,TRESULT,OPERTOR,TESTDATE,TESTTIME,PARTNUM,MNO) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
+                                                stm = string.Format("INSERT INTO CFT_DATA (BARCODE,TRESULT,OPERTOR,TESTDATE,TESTTIME,CFT01,MNO) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}')",
                                                     barcode, (string)dr["RESULT"], (string)dr["OPERATORID"], DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), (string)dr["DATA1"], _PM + _GROUP1 + _TRACK + _MACID);
                                                 int insertrst = oraDB.executeNonQuery(stm);
                                                 AddMessage("插入刷卡机台" + (string)dr["PARTNUM"] + " " + insertrst.ToString());
