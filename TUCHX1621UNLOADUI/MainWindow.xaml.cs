@@ -34,7 +34,7 @@ namespace TUCHX1621UNLOADUI
         Scan ScanA, ScanB;
         long SWms = 0;int LampColor = 1;bool[] M300; Stopwatch LampGreenSw = new Stopwatch();
         List<AlarmData> AlarmList = new List<AlarmData>(); string CurrentAlarm = "";
-        string _PM, _GROUP1, _TRACK, _MACID, _LIGHT_ID, _LIGHT_ID2, _WORKSTATION;
+        string _PM, _GROUP1, _TRACK, _MACID, _LIGHT_ID, _WORKSTATION;
         int LampGreenElapse, LampGreenFlickerElapse, LampYellowElapse, LampYellowFlickerElapse, LampRedElapse;
         string LastBanci;
         读写器530SDK.CReader reader = new 读写器530SDK.CReader();
@@ -67,7 +67,7 @@ namespace TUCHX1621UNLOADUI
             MACID.Text = _MACID = Inifile.INIGetStringValue(iniParameterPath, "BigData", "MACID", "007");
             WORKSTATION.Text = _WORKSTATION = Inifile.INIGetStringValue(iniParameterPath, "BigData", "WORKSTATION", "X1621");
             LIGHT_ID.Text = _LIGHT_ID = Inifile.INIGetStringValue(iniParameterPath, "BigData", "LIGHT_ID", "007");
-            LIGHT_ID2.Text = _LIGHT_ID2 = Inifile.INIGetStringValue(iniParameterPath, "BigData", "LIGHT_ID2", "007");
+            //LIGHT_ID2.Text = _LIGHT_ID2 = Inifile.INIGetStringValue(iniParameterPath, "BigData", "LIGHT_ID2", "007");
 
             LampGreenElapse = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "BigData", "LampGreenElapse", "0"));
             LampGreenFlickerElapse = int.Parse(Inifile.INIGetStringValue(iniParameterPath, "BigData", "LampGreenFlickerElapse", "0"));
@@ -198,9 +198,9 @@ namespace TUCHX1621UNLOADUI
                                 string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
                                     , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
                                 _result = mysql.executeQuery(stm);
-                                stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
-    , _PM, _LIGHT_ID2, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
-                                _result = mysql.executeQuery(stm);
+    //                            stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
+    //, _PM, _LIGHT_ID2, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
+    //                            _result = mysql.executeQuery(stm);
                             }
                             this.Dispatcher.Invoke(new Action(() =>
                             {
@@ -530,14 +530,19 @@ namespace TUCHX1621UNLOADUI
                             if (mysql.Connect())
                             {
                                 string currentAlarm = LampColor == 4 ? CurrentAlarm : "NA";
-                                string stm = string.Format("UPDATE HA_F4_LIGHT SET LIGHT = '{3}',SDATE = '{4}',STIME = '{5}',ALARM = '{6}',TIME_1 = '{8}',TIME_2 = '{9}',TIME_3 = '{10}',TIME_4 = '{11}',TIME_5 = '{12}' WHERE PM = '{0}' AND LIGHT_ID = '{1}' AND MACID = '{2}' AND CLASS = '{7}', AND GROUP1 = '{13}' AND TRACK = '{14}' AND WORKSTATION = '{15}'"
+                                string stm = string.Format("UPDATE HA_F4_LIGHT SET LIGHT = '{3}',SDATE = '{4}',STIME = '{5}',ALARM = '{6}',TIME_1 = '{8}',TIME_2 = '{9}',TIME_3 = '{10}',TIME_4 = '{11}',TIME_5 = '{12}' WHERE PM = '{0}' AND LIGHT_ID = '{1}' AND MACID = '{2}' AND CLASS = '{7}' AND GROUP1 = '{13}' AND TRACK = '{14}' AND WORKSTATION = '{15}'"
                                     , _PM, _LIGHT_ID, _MACID, LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), currentAlarm, GetBanci(), ((double)LampGreenElapse / 60).ToString("F2"), ((double)LampGreenFlickerElapse / 60).ToString("F2"), ((double)LampYellowElapse / 60).ToString("F2")
                                     , ((double)LampYellowFlickerElapse / 60).ToString("F2"), ((double)LampRedElapse / 60).ToString("F2"), _GROUP1, _TRACK, _WORKSTATION);
+                                
+                                //this.Dispatcher.Invoke(new Action(() =>
+                                //{
+                                //    AddMessage(stm);
+                                //}));
                                 _result = mysql.executeQuery(stm);
-                                stm = string.Format("UPDATE HA_F4_LIGHT SET LIGHT = '{3}',SDATE = '{4}',STIME = '{5}',ALARM = '{6}',TIME_1 = '{8}',TIME_2 = '{9}',TIME_3 = '{10}',TIME_4 = '{11}',TIME_5 = '{12}' WHERE PM = '{0}' AND LIGHT_ID = '{1}' AND MACID = '{2}' AND CLASS = '{7}', AND GROUP1 = '{13}' AND TRACK = '{14}' AND WORKSTATION = '{15}'"
-                                    , _PM, _LIGHT_ID2, _MACID, LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), currentAlarm, GetBanci(), ((double)LampGreenElapse / 60).ToString("F2"), ((double)LampGreenFlickerElapse / 60).ToString("F2"), ((double)LampYellowElapse / 60).ToString("F2")
-                                    , ((double)LampYellowFlickerElapse / 60).ToString("F2"), ((double)LampRedElapse / 60).ToString("F2"), _GROUP1, _TRACK, _WORKSTATION);
-                                _result = mysql.executeQuery(stm);
+                                //stm = string.Format("UPDATE HA_F4_LIGHT SET LIGHT = '{3}',SDATE = '{4}',STIME = '{5}',ALARM = '{6}',TIME_1 = '{8}',TIME_2 = '{9}',TIME_3 = '{10}',TIME_4 = '{11}',TIME_5 = '{12}' WHERE PM = '{0}' AND LIGHT_ID = '{1}' AND MACID = '{2}' AND CLASS = '{7}' AND GROUP1 = '{13}' AND TRACK = '{14}' AND WORKSTATION = '{15}'"
+                                //    , _PM, _LIGHT_ID2, _MACID, LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), currentAlarm, GetBanci(), ((double)LampGreenElapse / 60).ToString("F2"), ((double)LampGreenFlickerElapse / 60).ToString("F2"), ((double)LampYellowElapse / 60).ToString("F2")
+                                //    , ((double)LampYellowFlickerElapse / 60).ToString("F2"), ((double)LampRedElapse / 60).ToString("F2"), _GROUP1, _TRACK, _WORKSTATION);
+                                //_result = mysql.executeQuery(stm);
                             }
                             mysql.DisConnect();
                             return _result.ToString();
@@ -1026,14 +1031,14 @@ namespace TUCHX1621UNLOADUI
             _MACID = MACID.Text;
             _WORKSTATION = WORKSTATION.Text;
             _LIGHT_ID = LIGHT_ID.Text;
-            _LIGHT_ID2 = LIGHT_ID2.Text;
+            //_LIGHT_ID2 = LIGHT_ID2.Text;
             Inifile.INIWriteValue(iniParameterPath, "BigData", "PM", PM.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "GROUP1", GROUP1.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "TRACK", TRACK.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "MACID", MACID.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "WORKSTATION", WORKSTATION.Text);
             Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID", LIGHT_ID.Text);
-            Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID2", LIGHT_ID2.Text);
+            //Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID2", LIGHT_ID2.Text);
             AddMessage("参数保存完成");
         }
 

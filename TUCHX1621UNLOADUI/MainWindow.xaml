@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TUCHX1621UNLOADUI"
         mc:Ignorable="d"
-        Title="TUCHX1621UNLOADUI2020042101" Icon="ship_64px_1224538_easyicon.net.ico"
+        Title="TUCHX1621UNLOADUI2020042901" Icon="ship_64px_1224538_easyicon.net.ico"
         WindowStartupLocation="CenterScreen" Height="418" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
@@ -58,11 +58,11 @@
                     <TextBox Name="LIGHT_ID" Width="60" Height="30"></TextBox>
                     <Button Width="40" Height="30" Margin="1" Content="保存" Click="BigDataParamClicked"></Button>
                 </StackPanel>
-                <StackPanel Orientation="Horizontal" Margin="1">
+                <!--<StackPanel Orientation="Horizontal" Margin="1">
                     <TextBlock Text="三色灯编号2" Width="90"></TextBlock>
                     <TextBox Name="LIGHT_ID2" Width="60" Height="30"></TextBox>
                     
-                </StackPanel>
+                </StackPanel>-->
             </StackPanel>
 
         </StackPanel>
