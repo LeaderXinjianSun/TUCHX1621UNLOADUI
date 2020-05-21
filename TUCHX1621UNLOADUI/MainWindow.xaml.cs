@@ -153,7 +153,11 @@ namespace TUCHX1621UNLOADUI
             while (true)
             {
                 await Task.Delay(200);
-                #region 更新界面
+                try
+                {
+
+
+                    #region 更新界面
                 if (Fx5u.Connect)
                 {
                     EllipsePLCState.Fill = Brushes.Green;
@@ -172,7 +176,7 @@ namespace TUCHX1621UNLOADUI
                 }
                 CycleText.Text = SWms.ToString() + " ms";
                 #endregion
-                #region 换班
+                    #region 换班
                 if (LastBanci != GetBanci())
                 {
                     LastBanci = GetBanci();
@@ -229,7 +233,12 @@ namespace TUCHX1621UNLOADUI
 
                     AddMessage(LastBanci + " 换班数据清零");
                 }
-                #endregion
+                    #endregion
+                }
+                catch
+                {
+
+                }
 
             }
         }
@@ -292,9 +301,10 @@ namespace TUCHX1621UNLOADUI
             while (true)
             {
                 await Task.Delay(1000);
-
-                #region 刷卡
                 try
+                {
+                    #region 刷卡
+                    try
                 {
                     byte[] buf = new byte[256];//用来存储卡信息的buff
                     byte[] snr = 读写器530SDK.CPublic.CharToByte("FF FF FF FF FF FF");//应该是一种读码格式，照抄即可。
@@ -381,7 +391,7 @@ namespace TUCHX1621UNLOADUI
                     AddMessage(ex.Message);
                 }
                 #endregion
-                #region 刷卡恢复
+                    #region 刷卡恢复
                 if (CardLockFlag)
                 {
                     try
@@ -424,7 +434,7 @@ namespace TUCHX1621UNLOADUI
                     }
                 }
                 #endregion
-                #region 锁机
+                    #region 锁机
                 if (!CardLockFlag)
                 {
                     if (LampColor != 1)
@@ -447,7 +457,12 @@ namespace TUCHX1621UNLOADUI
                 {
                     timetick = 0;
                 }
-                #endregion
+                    #endregion
+                }
+                catch
+                {
+
+                }
             }
         }
         async void BigDataRun()
@@ -458,8 +473,10 @@ namespace TUCHX1621UNLOADUI
             bool first = true;
             while (true)
             {
-                await Task.Delay(1000);//每秒刷新               
-                #region 报警
+                await Task.Delay(1000);//每秒刷新    
+                try
+                {         
+                    #region 报警
                 if (M300 != null && Fx5u_2.Connect)
                 {
                     for (int i = 0; i < AlarmList.Count; i++)
@@ -485,7 +502,7 @@ namespace TUCHX1621UNLOADUI
 
                 }
                 #endregion
-                #region 灯号更新
+                    #region 灯号更新
                 switch (LampColor)
                 {
                     case 1:
@@ -562,10 +579,15 @@ namespace TUCHX1621UNLOADUI
                 {
                     LampGreenSw.Restart();
                 }
-                #endregion
-                #region 机台指标
+                    #endregion
+                    #region 机台指标
 
-                #endregion
+                    #endregion
+                }
+                catch 
+                {
+                    
+                }
                 GreenElapse.Text = LampGreenSw.Elapsed.TotalMinutes.ToString("F1") + " min";
             }
 
