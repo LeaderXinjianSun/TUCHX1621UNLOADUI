@@ -245,6 +245,7 @@ namespace TUCHX1621UNLOADUI
         void Run()
         {
             Stopwatch sw = new Stopwatch();
+            Random rd = new Random();
             while (true)
             {
                 sw.Restart();
@@ -284,6 +285,10 @@ namespace TUCHX1621UNLOADUI
                     M300 = Fx5u_2.ReadMultiM("M1100", (ushort)AlarmList.Count);
                     //读三色灯状态
                     LampColor = Fx5u_2.ReadW("D200");
+                    #endregion
+                    #region 随机数
+                    int rdvalue = rd.Next(100);
+                    Fx5u_2.WriteMultD("D3100", new short[] { (short)rdvalue });
                     #endregion
                 }
                 catch
