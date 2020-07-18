@@ -19,6 +19,7 @@ using System.Data;
 using SXJLibrary;
 using OfficeOpenXml;
 using System.IO;
+using Newtonsoft.Json;
 
 namespace TUCHX1621UNLOADUI
 {
@@ -39,6 +40,7 @@ namespace TUCHX1621UNLOADUI
         string LastBanci;
         读写器530SDK.CReader reader = new 读写器530SDK.CReader();
         bool CardLockFlag;DateTime CardLockTime;
+        DataTable OutputCount;
         #endregion
         public MainWindow()
         {
@@ -61,6 +63,9 @@ namespace TUCHX1621UNLOADUI
         }
         void Init()
         {
+            Grid1.Visibility = Visibility.Visible;
+            Grid2.Visibility = Visibility.Collapsed;
+
             PM.Text = _PM = Inifile.INIGetStringValue(iniParameterPath, "BigData", "PM", "X1621");
             GROUP1.Text = _GROUP1 = Inifile.INIGetStringValue(iniParameterPath, "BigData", "GROUP1", "NA");
             TRACK.Text = _TRACK = Inifile.INIGetStringValue(iniParameterPath, "BigData", "TRACK", "0102");
@@ -147,6 +152,72 @@ namespace TUCHX1621UNLOADUI
                 AddMessage(ex.Message);
             }
             #endregion
+            try
+            {
+                using (StreamReader reader = new StreamReader(System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json")))
+                {
+                    string json = reader.ReadToEnd();
+                    OutputCount = JsonConvert.DeserializeObject<DataTable>(json);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+                OutputCount = new DataTable();
+                OutputCount.Columns.Add("Time");
+                OutputCount.Columns.Add("Tested");
+                OutputCount.Columns.Add("Pass");
+                OutputCount.Columns.Add("FPY");
+                if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20)//白班
+                {
+
+                    for (int i = 0; i < 12; i++)
+                    {
+                        DataRow dr = OutputCount.NewRow();
+                        dr["Time"] = $"{i + 8}:00-{i + 9}:00";
+                        OutputCount.Rows.Add(dr);
+                    }
+                }
+                else
+                {
+                    for (int i = 0; i < 4; i++)
+                    {
+                        DataRow dr = OutputCount.NewRow();
+                        dr["Time"] = $"{i + 20}:00-{(i < 3 ? i + 21 : 0)}:00";
+                        OutputCount.Rows.Add(dr);
+                    }
+                    for (int i = 0; i < 8; i++)
+                    {
+                        DataRow dr = OutputCount.NewRow();
+                        dr["Time"] = $"{i}:00-{i + 1}:00";
+                        OutputCount.Rows.Add(dr);
+                    }
+                }
+                DataRow dr1 = OutputCount.NewRow();
+                dr1["Time"] = "Summary";
+                OutputCount.Rows.Add(dr1);
+                WriteToJson(OutputCount, System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json"));
+            }
+            
+            DataGrid2.ItemsSource = OutputCount.DefaultView;
+        }
+        private void WriteToJson(object p, string path)
+        {
+            try
+            {
+                using (FileStream fs = File.Open(path, FileMode.Create))
+                using (StreamWriter sw = new StreamWriter(fs))
+                using (JsonWriter jw = new JsonTextWriter(sw))
+                {
+                    jw.Formatting = Formatting.Indented;
+                    JsonSerializer serializer = new JsonSerializer();
+                    serializer.Serialize(jw, p);
+                }
+            }
+            catch (Exception ex)
+            {
+                AddMessage(ex.Message);
+            }
         }
         async void UpdateUI()
         {
@@ -158,81 +229,112 @@ namespace TUCHX1621UNLOADUI
 
 
                     #region 更新界面
-                if (Fx5u.Connect)
-                {
-                    EllipsePLCState.Fill = Brushes.Green;
-                }
-                else
-                {
-                    EllipsePLCState.Fill = Brushes.Red;
-                }
-                if (Fx5u_2.Connect)
-                {
-                    EllipsePLCState2.Fill = Brushes.Green;
-                }
-                else
-                {
-                    EllipsePLCState2.Fill = Brushes.Red;
-                }
-                CycleText.Text = SWms.ToString() + " ms";
-                #endregion
-                    #region 换班
-                if (LastBanci != GetBanci())
-                {
-                    LastBanci = GetBanci();
-                    Inifile.INIWriteValue(iniParameterPath, "Summary", "LastBanci", LastBanci);
-                    LampGreenElapse = 0;
-                    Inifile.INIWriteValue(iniParameterPath, "BigData", "LampGreenElapse", LampGreenElapse.ToString());
-                    LampGreenFlickerElapse = 0;
-                    Inifile.INIWriteValue(iniParameterPath, "BigData", "LampGreenFlickerElapse", LampGreenFlickerElapse.ToString());
-                    LampYellowElapse = 0;
-                    Inifile.INIWriteValue(iniParameterPath, "BigData", "LampYellowElapse", LampYellowElapse.ToString());
-                    LampYellowFlickerElapse = 0;
-                    Inifile.INIWriteValue(iniParameterPath, "BigData", "LampYellowFlickerElapse", LampYellowFlickerElapse.ToString());
-                    LampRedElapse = 0;
-                    Inifile.INIWriteValue(iniParameterPath, "BigData", "LampRedElapse", LampRedElapse.ToString());
-                    await Task.Run(() =>
+                    if (Fx5u.Connect)
                     {
-                        Mysql mysql = new Mysql();
-                        try
+                        EllipsePLCState.Fill = Brushes.Green;
+                    }
+                    else
+                    {
+                        EllipsePLCState.Fill = Brushes.Red;
+                    }
+                    if (Fx5u_2.Connect)
+                    {
+                        EllipsePLCState2.Fill = Brushes.Green;
+                    }
+                    else
+                    {
+                        EllipsePLCState2.Fill = Brushes.Red;
+                    }
+                    CycleText.Text = SWms.ToString() + " ms";
+                    #endregion
+                    #region 换班
+                    if (LastBanci != GetBanci())
+                    {
+                        
+                       
+                        LampGreenElapse = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "BigData", "LampGreenElapse", LampGreenElapse.ToString());
+                        LampGreenFlickerElapse = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "BigData", "LampGreenFlickerElapse", LampGreenFlickerElapse.ToString());
+                        LampYellowElapse = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "BigData", "LampYellowElapse", LampYellowElapse.ToString());
+                        LampYellowFlickerElapse = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "BigData", "LampYellowFlickerElapse", LampYellowFlickerElapse.ToString());
+                        LampRedElapse = 0;
+                        Inifile.INIWriteValue(iniParameterPath, "BigData", "LampRedElapse", LampRedElapse.ToString());
+                        await Task.Run(() =>
                         {
-                            int _result = -999;
-                            if (mysql.Connect())
+                            Mysql mysql = new Mysql();
+                            try
                             {
-                                string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
-                                    , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
-                                _result = mysql.executeQuery(stm);
-    //                            stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
-    //, _PM, _LIGHT_ID2, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
-    //                            _result = mysql.executeQuery(stm);
+                                int _result = -999;
+                                if (mysql.Connect())
+                                {
+                                    string stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
+                                        , _PM, _LIGHT_ID, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
+                                    _result = mysql.executeQuery(stm);
+                                //                            stm = string.Format("INSERT INTO HA_F4_LIGHT (PM,LIGHT_ID,MACID,CLASS,LIGHT,SDATE,STIME,ALARM,TIME_1,TIME_2,TIME_3,TIME_4,TIME_5,GROUP1,TRACK,WORKSTATION) VALUES ('{0}','{1}','{2}','{3}','{4}','{5}','{6}','{7}','0','0','0','0','0','{8}','{9}','{10}')"
+                                //, _PM, _LIGHT_ID2, _MACID, GetBanci(), LampColor.ToString(), DateTime.Now.ToString("yyyyMMdd"), DateTime.Now.ToString("HHmmss"), "NA", _GROUP1, _TRACK, _WORKSTATION);
+                                //                            _result = mysql.executeQuery(stm);
                             }
-                            this.Dispatcher.Invoke(new Action(() =>
-                            {
-                                AddMessage("插入数据库灯信号" + _result.ToString());
-                            }));
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            this.Dispatcher.Invoke(new Action(() =>
-                            {
-                                AddMessage(ex.Message);
-                            }));
-                            
-                        }
-                        finally
-                        {
-                            mysql.DisConnect();
-                        }
-                    });
+                                this.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    AddMessage("插入数据库灯信号" + _result.ToString());
+                                }));
 
-                    Fx5u_2.SetM("M2606", true);
-                    CardLockFlag = true;
-                    CardLockTime = DateTime.Now;
-                    AddMessage("机台锁定!");
+                            }
+                            catch (Exception ex)
+                            {
+                                this.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    AddMessage(ex.Message);
+                                }));
 
-                    AddMessage(LastBanci + " 换班数据清零");
-                }
+                            }
+                            finally
+                            {
+                                mysql.DisConnect();
+                            }
+                        });
+
+                        Fx5u_2.SetM("M2606", true);
+                        CardLockFlag = true;
+                        CardLockTime = DateTime.Now;
+                        AddMessage("机台锁定!");
+
+                        if (DateTime.Now.Hour >= 8 && DateTime.Now.Hour < 20)//白班
+                        {
+                            for (int i = 0; i < 12; i++)
+                            {
+                                OutputCount.Rows[i]["Time"] = $"{i + 8}:00-{i + 9}:00";
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < 4; i++)
+                            {
+                                OutputCount.Rows[i]["Time"] = $"{i + 20}:00-{(i < 3 ? i + 21 : 0)}:00";
+                            }
+                            for (int i = 0; i < 8; i++)
+                            {
+                                OutputCount.Rows[i + 4]["Time"] = $"{i}:00-{i + 1}:00";
+                            }
+                        }
+                        for (int i = 0; i < 12; i++)
+                        {
+                            OutputCount.Rows[i]["Tested"] = 0;
+                            OutputCount.Rows[i]["Pass"] = 0;
+                            OutputCount.Rows[i]["FPY"] = "0%";
+                        }
+                        OutputCount.Rows[12]["Tested"] = 0;
+                        OutputCount.Rows[12]["Pass"] = 0;
+                        OutputCount.Rows[12]["FPY"] = "0%";
+                        DataGrid2.ItemsSource = OutputCount.DefaultView;
+                        WriteToJson(OutputCount, System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json"));
+                        LastBanci = GetBanci();
+                        Inifile.INIWriteValue(iniParameterPath, "Summary", "LastBanci", LastBanci);
+                        AddMessage(LastBanci + " 换班数据清零");
+                    }
                     #endregion
                 }
                 catch
@@ -640,6 +742,19 @@ namespace TUCHX1621UNLOADUI
             });
             AddMessage("插入报警" + result);
         }
+
+        private void MenuItem_Click1(object sender, RoutedEventArgs e)
+        {
+            Grid1.Visibility = Visibility.Visible;
+            Grid2.Visibility = Visibility.Collapsed;
+        }
+
+        private void MenuItem_Click2(object sender, RoutedEventArgs e)
+        {
+            Grid1.Visibility = Visibility.Collapsed;
+            Grid2.Visibility = Visibility.Visible;
+        }
+
         private string GetBanci()
         {
             string rs = "";
@@ -669,7 +784,11 @@ namespace TUCHX1621UNLOADUI
                 {
                     string stm = "SELECT * FROM (SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC) WHERE ROWNUM <= 5";
                     DataSet ds = oraDB.executeQuery(stm);
-                    DataTable dt = ds.Tables["table0"];
+                    DataTable dt = ds.Tables["table0"];                    
+                    this.Dispatcher.Invoke(new Action(() =>
+                    {
+                        DataGrid1.ItemsSource = dt.DefaultView;
+                    }));
                     if (dt.Rows.Count > 0)
                     {
                         if (dt.Rows[0]["STATUS"] == DBNull.Value)
@@ -697,6 +816,10 @@ namespace TUCHX1621UNLOADUI
                                 stm = "SELECT * FROM (SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC) WHERE ROWNUM <= 15 ";
                                 ds = oraDB.executeQuery(stm);
                                 dt = ds.Tables["table0"];
+                                this.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    DataGrid1.ItemsSource = dt.DefaultView;
+                                }));
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
@@ -718,7 +841,7 @@ namespace TUCHX1621UNLOADUI
                                             {
                                                 try
                                                 {
-                                                    result[i] = short.Parse((string)drs[0]["RESULT"]);
+                                                    result[i] = short.Parse((string)drs[0]["RESULT"]);                                    
                                                 }
                                                 catch (Exception ex)
                                                 {
@@ -744,17 +867,70 @@ namespace TUCHX1621UNLOADUI
                                         }
                                         if (checkrst)
                                         {
-                                            string str;
+                                            string str; int _tested = 0, _pass = 0;
                                             Fx5u_2.WriteMultD("D1000", result);
                                             str = "A_BordInfo;";
                                             for (int i = 0; i < 15; i++)
                                             {
                                                 str += result[i].ToString() + ";";
+                                                _tested++;
+                                                if (result[i] == 3)
+                                                {
+                                                    _pass++;
+                                                }
                                             }
                                             str = str.Substring(0, str.Length - 1);
                                             this.Dispatcher.Invoke(new Action(() =>
                                             {
                                                 AddMessage(str);
+                                                try
+                                                {
+                                                    string nowhour = $"{DateTime.Now.Hour}:00-{(DateTime.Now.Hour + 1 >= 24 ? DateTime.Now.Hour + 1 - 24 : DateTime.Now.Hour + 1)}:00";
+                                                    DataRow[] drs = OutputCount.Select($"Time = '{nowhour}'");
+                                                    if (drs.Length > 0)
+                                                    {
+                                                        drs[0]["Tested"] = int.Parse(drs[0]["Tested"].ToString()) + _tested;
+                                                        drs[0]["Pass"] = int.Parse(drs[0]["Pass"].ToString()) + _pass;
+
+                                                        double _fpy;
+                                                        if (int.Parse(drs[0]["Tested"].ToString()) != 0)
+                                                        {
+                                                            _fpy = double.Parse(drs[0]["Pass"].ToString()) / double.Parse(drs[0]["Tested"].ToString()) * 100;
+                                                        }
+                                                        else
+                                                        {
+                                                            _fpy = 0;
+                                                        }
+                                                        drs[0]["FPY"] = _fpy.ToString("F1") + "%";
+                                                        _tested = 0; _pass = 0;
+                                                        for (int i = 0; i < OutputCount.Rows.Count - 1; i++)
+                                                        {
+                                                            _tested += int.Parse(OutputCount.Rows[i]["Tested"].ToString());
+                                                            _pass += int.Parse(OutputCount.Rows[i]["Pass"].ToString());
+                                                        }
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"] = _tested;
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"] = _pass;
+                                                        if (int.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) != 0)
+                                                        {
+                                                            _fpy = double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"].ToString()) / double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) * 100;
+                                                        }
+                                                        else
+                                                        {
+                                                            _fpy = 0;
+                                                        }
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["FPY"] = _fpy.ToString("F1") + "%";
+
+                                                        DataGrid2.ItemsSource = OutputCount.DefaultView;
+                                                        WriteToJson(OutputCount, System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json"));
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    AddMessage(ex.Message);
+                                                }
+                                                
+
+
                                             }));
 
                                             Fx5u_2.SetM("M2599", true);//载具扫码-已测过【A轨道】
@@ -817,6 +993,10 @@ namespace TUCHX1621UNLOADUI
                     string stm = "SELECT * FROM (SELECT * FROM BODMSG WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC) WHERE ROWNUM <= 5";
                     DataSet ds = oraDB.executeQuery(stm);
                     DataTable dt = ds.Tables["table0"];
+                    this.Dispatcher.Invoke(new Action(() =>
+                    {
+                        DataGrid1.ItemsSource = dt.DefaultView;
+                    }));
                     if (dt.Rows.Count > 0)
                     {
                         if (dt.Rows[0]["STATUS"] == DBNull.Value)
@@ -842,6 +1022,10 @@ namespace TUCHX1621UNLOADUI
                                 stm = "SELECT * FROM (SELECT * FROM BARBIND WHERE SCBODBAR = '" + barcode + "' ORDER BY SIDATE DESC) WHERE ROWNUM <= 15";
                                 ds = oraDB.executeQuery(stm);
                                 dt = ds.Tables["table0"];
+                                this.Dispatcher.Invoke(new Action(() =>
+                                {
+                                    DataGrid1.ItemsSource = dt.DefaultView;
+                                }));
                                 if (dt.Rows.Count == 15)
                                 {
                                     stm = "INSERT INTO BODMSG (SCBODBAR, STATUS) VALUES('" + barcode + "','OFF')";
@@ -889,17 +1073,67 @@ namespace TUCHX1621UNLOADUI
                                         }
                                         if (checkrst)
                                         {
-                                            string str;
+                                            string str; int _tested = 0, _pass = 0;
                                             Fx5u_2.WriteMultD("D1020", result);
                                             str = "B_BordInfo;";
                                             for (int i = 0; i < 15; i++)
                                             {
                                                 str += result[i].ToString() + ";";
+                                                _tested++;
+                                                if (result[i] == 3)
+                                                {
+                                                    _pass++;
+                                                }
                                             }
                                             str = str.Substring(0, str.Length - 1);
                                             this.Dispatcher.Invoke(new Action(() =>
                                             {
                                                 AddMessage(str);
+                                                try
+                                                {
+                                                    string nowhour = $"{DateTime.Now.Hour}:00-{(DateTime.Now.Hour + 1 >= 24 ? DateTime.Now.Hour + 1 - 24 : DateTime.Now.Hour + 1)}:00";
+                                                    DataRow[] drs = OutputCount.Select($"Time = '{nowhour}'");
+                                                    if (drs.Length > 0)
+                                                    {
+                                                        drs[0]["Tested"] = int.Parse(drs[0]["Tested"].ToString()) + _tested;
+                                                        drs[0]["Pass"] = int.Parse(drs[0]["Pass"].ToString()) + _pass;
+
+                                                        double _fpy;
+                                                        if (int.Parse(drs[0]["Tested"].ToString()) != 0)
+                                                        {
+                                                            _fpy = double.Parse(drs[0]["Pass"].ToString()) / double.Parse(drs[0]["Tested"].ToString()) * 100;
+                                                        }
+                                                        else
+                                                        {
+                                                            _fpy = 0;
+                                                        }
+                                                        drs[0]["FPY"] = _fpy.ToString("F1") + "%";
+                                                        _tested = 0; _pass = 0;
+                                                        for (int i = 0; i < OutputCount.Rows.Count - 1; i++)
+                                                        {
+                                                            _tested += int.Parse(OutputCount.Rows[i]["Tested"].ToString());
+                                                            _pass += int.Parse(OutputCount.Rows[i]["Pass"].ToString());
+                                                        }
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"] = _tested;
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"] = _pass;
+                                                        if (int.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) != 0)
+                                                        {
+                                                            _fpy = double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"].ToString()) / double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) * 100;
+                                                        }
+                                                        else
+                                                        {
+                                                            _fpy = 0;
+                                                        }
+                                                        OutputCount.Rows[OutputCount.Rows.Count - 1]["FPY"] = _fpy.ToString("F1") + "%";
+
+                                                        DataGrid2.ItemsSource = OutputCount.DefaultView;
+                                                        WriteToJson(OutputCount, System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json"));
+                                                    }
+                                                }
+                                                catch (Exception ex)
+                                                {
+                                                    AddMessage(ex.Message);
+                                                }
                                             }));
 
                                             Fx5u_2.SetM("M2604", true);//载具扫码-已测过【B轨道】
@@ -1067,6 +1301,42 @@ namespace TUCHX1621UNLOADUI
             Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID", LIGHT_ID.Text);
             //Inifile.INIWriteValue(iniParameterPath, "BigData", "LIGHT_ID2", LIGHT_ID2.Text);
             AddMessage("参数保存完成");
+            //string nowhour = $"{DateTime.Now.Hour}:00-{(DateTime.Now.Hour + 1 >= 24 ? DateTime.Now.Hour + 1 - 24 : DateTime.Now.Hour + 1)}:00";
+            //DataRow[] drs = OutputCount.Select($"Time = '{nowhour}'");
+            //if (drs.Length > 0)
+            //{
+            //    drs[0]["Tested"] = int.Parse(drs[0]["Tested"].ToString()) + 100;
+            //    drs[0]["Pass"] = int.Parse(drs[0]["Pass"].ToString()) + 50;
+            //    double _fpy;
+            //    if (int.Parse(drs[0]["Tested"].ToString()) != 0)
+            //    {
+            //        _fpy = double.Parse(drs[0]["Pass"].ToString()) / double.Parse(drs[0]["Tested"].ToString()) * 100;
+            //    }
+            //    else
+            //    {
+            //        _fpy = 0;
+            //    }
+            //    drs[0]["FPY"] = _fpy.ToString("F1") + "%";
+            //    int _tested = 0, _pass = 0;
+            //    for (int i = 0; i < OutputCount.Rows.Count - 1; i++)
+            //    {
+            //        _tested += int.Parse(OutputCount.Rows[i]["Tested"].ToString());
+            //        _pass += int.Parse(OutputCount.Rows[i]["Pass"].ToString());
+            //    }
+            //    OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"] = _tested;
+            //    OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"] = _pass;
+            //    if (int.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) != 0)
+            //    {
+            //        _fpy = double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Pass"].ToString()) / double.Parse(OutputCount.Rows[OutputCount.Rows.Count - 1]["Tested"].ToString()) * 100;
+            //    }
+            //    else
+            //    {
+            //        _fpy = 0;
+            //    }
+            //    OutputCount.Rows[OutputCount.Rows.Count - 1]["FPY"] = _fpy.ToString("F1") + "%";
+            //    DataGrid2.ItemsSource = OutputCount.DefaultView;
+            //    WriteToJson(OutputCount, System.IO.Path.Combine(System.Environment.CurrentDirectory, "OutputCount.json"));
+            //}
         }
 
         private void 扫码AClick(object sender, RoutedEventArgs e)

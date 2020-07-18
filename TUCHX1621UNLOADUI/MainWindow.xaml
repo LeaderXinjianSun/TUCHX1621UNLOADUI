@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TUCHX1621UNLOADUI"
         mc:Ignorable="d"
-        Title="TUCHX1621UNLOADUI2020060201" Icon="ship_64px_1224538_easyicon.net.ico"
+        Title="TUCHX1621UNLOADUI20200719" Icon="ship_64px_1224538_easyicon.net.ico"
         WindowStartupLocation="CenterScreen" Height="418" Width="700" Loaded="Window_Loaded" Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
@@ -27,11 +27,16 @@
     </Window.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="80"></RowDefinition>
+            <RowDefinition Height="40"></RowDefinition>
+            <RowDefinition Height="40"></RowDefinition>
             <RowDefinition></RowDefinition>
             <RowDefinition Height="40"></RowDefinition>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" VerticalAlignment="Top">
+        <Menu VerticalAlignment="Center">
+            <MenuItem Header="主页" Click="MenuItem_Click1"></MenuItem>
+            <MenuItem Header="表单" Click="MenuItem_Click2"></MenuItem>
+        </Menu>
+        <StackPanel Grid.Row="1" Orientation="Horizontal" VerticalAlignment="Top">
             <StackPanel Orientation="Horizontal" Margin="1">
                 <TextBlock Text="机种"></TextBlock>
                 <TextBox Name="PM" Width="60" Height="30"></TextBox>
@@ -66,10 +71,11 @@
             </StackPanel>
 
         </StackPanel>
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2" Name="Grid1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="4*"></ColumnDefinition>
+                <ColumnDefinition Width="2*"></ColumnDefinition>
                 <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition Width="1.5*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <TextBox VerticalAlignment="Stretch" VerticalContentAlignment="Top" HorizontalContentAlignment="Left" Margin="1" x:Name="MsgTextBox" IsReadOnly="True" TextChanged="MsgTextBox_TextChanged"  FontSize="14" Background="Black" FontFamily="宋体" Foreground="White" AcceptsReturn="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto"></TextBox>
             <StackPanel Grid.Column="1" Orientation="Vertical">
@@ -79,9 +85,12 @@
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="扫码A" Margin="0,10,0,10" Click="扫码AClick"></Button>
                 <Button Width="60" Height="30" HorizontalAlignment="Center" Content="扫码B" Margin="0,10,0,10" Click="扫码BClick"></Button>
             </StackPanel>
+            <DataGrid Grid.Column="2" Name="DataGrid2" Margin="1" GridLinesVisibility="All" IsReadOnly="True"></DataGrid>
         </Grid>
-
-        <StatusBar Grid.Row="2">
+        <Grid Grid.Row="2" Name="Grid2" Visibility="Collapsed">
+            <DataGrid Name="DataGrid1" Margin="1" GridLinesVisibility="All" IsReadOnly="True"></DataGrid>
+        </Grid>
+        <StatusBar Grid.Row="3">
             <StatusBarItem>
                 <TextBlock>PLC</TextBlock>
             </StatusBarItem>
